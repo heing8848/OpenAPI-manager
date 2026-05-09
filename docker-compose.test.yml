@@ -1,0 +1,25 @@
+
+
+services:
+  one-api-test:
+    build: .
+    image: alfredapi:local-test
+    container_name: alfredapi-test
+    restart: always
+    command: --log-dir /app/logs
+    ports:
+      # Expose on 3001 as requested for local testing
+      - "3001:3000"
+    volumes:
+      # Use a separate test data folder so it doesn't mess with your production/old database
+      - ./data/test-db:/data
+      - ./logs/test-logs:/app/logs
+    environment:
+      # Using SQLite by default for the test instance for safe isolation from the main DB
+      - SESSION_SECRET=${TEST_SESSION_SECRET:-local-test-session-secret-change-me}
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' | awk -F: '{print $$2}'" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
